@@ -15,6 +15,9 @@ export default function Header() {
           <Link href="/board" className="hover:text-red-100 transition-colors">
             掲示板
           </Link>
+          <Link href="/reviews" className="transition hover:text-red-100">
+            授業評価
+          </Link>
           <Link href="/calendar" className="hover:text-red-100 transition-colors">
             カレンダー
           </Link>
