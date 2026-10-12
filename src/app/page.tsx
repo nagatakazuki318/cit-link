@@ -4,48 +4,6 @@ export default function Home() {
   return (
     <main className="min-h-screen bg-gray-50 text-gray-900">
 
-      {/* ヘッダー */}
-      <header className="bg-[#a94448] text-white">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
-
-          <Link href="/" className="text-2xl font-bold">
-            CIT LINK
-          </Link>
-
-          <nav className="flex gap-6 text-sm font-medium">
-            <Link
-              href="/board"
-              className="transition hover:text-red-100"
-            >
-              掲示板
-            </Link>
-
-            <Link
-              href="/calendar"
-              className="transition hover:text-red-100"
-            >
-              カレンダー
-            </Link>
-
-            <Link
-              href="/labs"
-              className="transition hover:text-red-100"
-            >
-              研究室
-            </Link>
-
-            <Link
-              href="/links"
-              className="transition hover:text-red-100"
-            >
-              リンク集
-            </Link>
-          </nav>
-
-        </div>
-      </header>
-
-
       {/* メインビジュアル */}
       <section className="relative overflow-hidden text-white">
 
@@ -454,17 +412,6 @@ export default function Home() {
 
         </div>
       </section>
-
-
-      {/* フッター */}
-      <footer className="border-t bg-gray-900 text-gray-400">
-
-        <div className="mx-auto max-w-6xl px-6 py-8 text-center text-sm">
-          © 2026 CIT LINK
-        </div>
-
-      </footer>
-
     </main>
   );
 }
