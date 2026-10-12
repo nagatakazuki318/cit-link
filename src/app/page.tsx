@@ -1,4 +1,5 @@
 import Link from "next/link";
+import RecentPosts from "../components/RecentPosts";
 
 export default function Home() {
   return (
@@ -329,88 +330,9 @@ export default function Home() {
           </div>
 
 
-          <div className="space-y-4">
-
-            {/* 投稿1 */}
-            <article className="rounded-lg border p-5 transition hover:bg-gray-50">
-
-              <div className="mb-2 flex items-center gap-3">
-
-                <span className="rounded-full bg-red-100 px-3 py-1 text-xs font-medium text-[#a94448]">
-                  質問・相談
-                </span>
-
-                <span className="text-xs text-gray-500">
-                  1年生
-                </span>
-
-              </div>
-
-              <h3 className="font-bold">
-                おすすめの授業について教えてください
-              </h3>
-
-              <p className="mt-2 text-sm text-gray-600">
-                2年生の方で、おすすめの授業があれば教えてほしいです！
-              </p>
-
-            </article>
-
-
-            {/* 投稿2 */}
-            <article className="rounded-lg border p-5 transition hover:bg-gray-50">
-
-              <div className="mb-2 flex items-center gap-3">
-
-                <span className="rounded-full bg-green-100 px-3 py-1 text-xs font-medium text-green-700">
-                  実験協力
-                </span>
-
-                <span className="text-xs text-gray-500">
-                  3年生
-                </span>
-
-              </div>
-
-              <h3 className="font-bold">
-                認知実験の参加者を募集しています
-              </h3>
-
-              <p className="mt-2 text-sm text-gray-600">
-                30分程度の実験に協力していただける方を募集しています。
-              </p>
-
-            </article>
-
-
-            {/* 投稿3 */}
-            <article className="rounded-lg border p-5 transition hover:bg-gray-50">
-
-              <div className="mb-2 flex items-center gap-3">
-
-                <span className="rounded-full bg-yellow-100 px-3 py-1 text-xs font-medium text-yellow-700">
-                  アンケート
-                </span>
-
-                <span className="text-xs text-gray-500">
-                  2年生
-                </span>
-
-              </div>
-
-              <h3 className="font-bold">
-                授業に関するアンケートへの協力お願いします
-              </h3>
-
-              <p className="mt-2 text-sm text-gray-600">
-                授業改善のためのアンケートを実施しています。
-              </p>
-
-            </article>
+         <RecentPosts />
 
           </div>
-
-        </div>
       </section>
     </main>
   );
