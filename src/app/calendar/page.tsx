@@ -16,27 +16,45 @@ const events: Event[] = [];
 
 const weekdays = ["日", "月", "火", "水", "木", "金", "土"];
 
+// カレンダーの色
+const COLORS = {
+  accent: "#c46b70",
+  event: "#dbeafe",
+  background: "#ffffff",
+  text: "#1e293b",
+  muted: "#64748b",
+  border: "#e2e8f0",
+  normal: "#334155",
+  sunday: "#dc2626",
+  saturday: "#2563eb",
+};
+
 export default function CalendarPage() {
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
 
   const styles: Record<string, CSSProperties> = {
     page: {
-  minHeight: "100vh",
-  padding: "32px 20px",
-  background: "#ffffff",
-  color: "#1e293b",
-  fontFamily: "Arial, sans-serif",
-},
-    container: { maxWidth: "1200px", margin: "0 auto" },
-    header: { marginBottom: "24px" },
+      minHeight: "100vh",
+      padding: "32px 20px",
+      background: COLORS.background,
+      color: COLORS.text,
+      fontFamily: "Arial, sans-serif",
+    },
+    container: {
+      maxWidth: "1200px",
+      margin: "0 auto",
+    },
+    header: {
+      marginBottom: "24px",
+    },
     monthGrid: {
       display: "grid",
       gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))",
       gap: "18px",
     },
     card: {
-      background: "white",
-      border: "1px solid #e2e8f0",
+      background: "#ffffff",
+      border: `1px solid ${COLORS.border}`,
       borderRadius: "12px",
       padding: "16px",
       boxShadow: "0 2px 8px rgba(0,0,0,0.04)",
@@ -59,8 +77,8 @@ export default function CalendarPage() {
       marginTop: "24px",
       padding: "20px",
       borderRadius: "12px",
-      background: "white",
-      border: "1px solid #e2e8f0",
+      background: "#ffffff",
+      border: `1px solid ${COLORS.border}`,
     },
   };
 
@@ -91,11 +109,12 @@ export default function CalendarPage() {
           <h1 style={{ fontSize: "30px", margin: "0 0 8px" }}>
             イベントカレンダー
           </h1>
-          <p style={{ margin: 0, color: "#64748b" }}>
+          <p style={{ margin: 0, color: COLORS.muted }}>
             2026年10月〜2027年3月の企画・イベント予定
           </p>
         </header>
 
+        {/* カレンダー */}
         <div style={styles.monthGrid}>
           {months.map(({ year, month, firstDay, daysInMonth }) => (
             <section key={`${year}-${month}`} style={styles.card}>
@@ -104,6 +123,7 @@ export default function CalendarPage() {
               </h2>
 
               <div style={styles.daysGrid}>
+                {/* 曜日 */}
                 {weekdays.map((weekday, index) => (
                   <div
                     key={weekday}
@@ -112,10 +132,10 @@ export default function CalendarPage() {
                       padding: "5px 0",
                       color:
                         index === 0
-                          ? "#dc2626"
+                          ? COLORS.sunday
                           : index === 6
-                            ? "#2563eb"
-                            : "#64748b",
+                            ? COLORS.saturday
+                            : COLORS.muted,
                       fontWeight: "bold",
                     }}
                   >
@@ -123,10 +143,12 @@ export default function CalendarPage() {
                   </div>
                 ))}
 
+                {/* 月初の空白 */}
                 {Array.from({ length: firstDay }, (_, index) => (
                   <div key={`empty-${index}`} />
                 ))}
 
+                {/* 日付 */}
                 {Array.from({ length: daysInMonth }, (_, index) => {
                   const day = index + 1;
 
@@ -161,28 +183,28 @@ export default function CalendarPage() {
                       style={{
                         ...styles.dayButton,
 
-                        // 今日または選択した日は青色
+                        // 今日または選択した日は赤系の色
                         background:
                           isSelected || isToday
-                            ? "#c46b70"
+                            ? COLORS.accent
                             : hasEvent
-                              ? "#dbeafe"
+                              ? COLORS.event
                               : "transparent",
 
-                        // 青い背景の日は白文字
+                        // 赤系の背景では白文字
                         color:
                           isSelected || isToday
-                            ? "white"
+                            ? "#ffffff"
                             : weekday === 0
-                              ? "#dc2626"
+                              ? COLORS.sunday
                               : weekday === 6
-                                ? "#2563eb"
-                                : "#334155",
+                                ? COLORS.saturday
+                                : COLORS.normal,
 
-                        // 今日の日付には青い枠も付ける
+                        // 今日または選択した日には赤系の枠
                         border:
                           isSelected || isToday
-                            ? "1px solid #c46b70"
+                            ? `1px solid ${COLORS.accent}`
                             : "1px solid transparent",
 
                         fontWeight:
@@ -201,21 +223,29 @@ export default function CalendarPage() {
           ))}
         </div>
 
+        {/* 選択した日の予定詳細 */}
         <section style={styles.details}>
-          <h2 style={{ fontSize: "20px", marginTop: 0 }}>
+          <h2
+            style={{
+              fontSize: "20px",
+              marginTop: 0,
+              paddingLeft: "10px",
+              borderLeft: `4px solid ${COLORS.accent}`,
+            }}
+          >
             {selectedDate
               ? `${selectedDate.replaceAll("-", "/")} の予定`
               : "予定の詳細"}
           </h2>
 
           {!selectedDate && (
-            <p style={{ color: "#64748b" }}>
+            <p style={{ color: COLORS.muted }}>
               カレンダーの日付をクリックすると、予定を確認できます。
             </p>
           )}
 
           {selectedDate && selectedEvents.length === 0 && (
-            <p style={{ color: "#64748b" }}>
+            <p style={{ color: COLORS.muted }}>
               この日に予定はありません。
             </p>
           )}
@@ -225,12 +255,19 @@ export default function CalendarPage() {
               key={`${event.date}-${event.title}-${index}`}
               style={{
                 padding: "14px 0",
-                borderTop: "1px solid #e2e8f0",
+                borderTop: `1px solid ${COLORS.border}`,
               }}
             >
-              <h3 style={{ margin: "0 0 12px", fontSize: "18px" }}>
+              <h3
+                style={{
+                  margin: "0 0 12px",
+                  fontSize: "18px",
+                  color: COLORS.accent,
+                }}
+              >
                 {event.title}
               </h3>
+
               <p>時間：{event.time}</p>
               <p>場所：{event.place}</p>
               <p style={{ lineHeight: 1.7 }}>{event.description}</p>
@@ -238,10 +275,32 @@ export default function CalendarPage() {
           ))}
         </section>
 
-        <p style={{ fontSize: "13px", color: "#64748b", marginTop: "16px" }}>
-          <span style={{ color: "#1d4ed8" }}>■</span> 今日の日付・選択中　
-          <span style={{ color: "#dbeafe" }}>■</span> 予定がある日　
-          <span style={{ color: "#94a3b8" }}>□</span> 通常の日
+        {/* ページ下部の色の説明 */}
+        <p
+          style={{
+            fontSize: "13px",
+            color: COLORS.muted,
+            marginTop: "16px",
+            display: "flex",
+            flexWrap: "wrap",
+            alignItems: "center",
+            gap: "8px 16px",
+          }}
+        >
+          <span>
+            <span style={{ color: COLORS.accent }}>■</span>
+            {" "}今日の日付・選択中
+          </span>
+
+          <span>
+            <span style={{ color: COLORS.event }}>■</span>
+            {" "}予定がある日
+          </span>
+
+          <span>
+            <span style={{ color: "#94a3b8" }}>□</span>
+            {" "}通常の日
+          </span>
         </p>
       </div>
     </main>
