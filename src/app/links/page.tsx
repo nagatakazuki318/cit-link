@@ -32,16 +32,6 @@ const linkData: CategorySection[] = [
         description: "課題提出・教材ダウンロード・小テスト。",
         url: "https://www.it-chiba.ac.jp/",
       },
-      {
-        title: "バスダイヤ表",
-        description: "新習志野、津田沼間をつなぐバスのダイヤ表",
-        url: "https://kmsk.is.it-chiba.ac.jp/portal/whole/gakubu/bus_schedule.pdf"
-      },
-      {
-        title: "CITサービス",
-        description: "学食のメニューや購買の営業時間",
-        url: "https://www.cit-s.com/"
-      },
     ],
   },
   {
@@ -56,6 +46,16 @@ const linkData: CategorySection[] = [
         title: "学生支援課・各種申請",
         description: "奨学金、証明書発行、通学定期等の手続き。",
         url: "https://www.it-chiba.ac.jp/",
+      },
+      {
+        title: "バスダイヤ表",
+        description: "新習志野、津田沼間をつなぐバスのダイヤ表",
+        url: "https://kmsk.is.it-chiba.ac.jp/portal/whole/gakubu/bus_schedule.pdf"
+      },
+      {
+        title: "CITサービス",
+        description: "学食のメニューや購買の営業時間",
+        url: "https://www.cit-s.com/"
       },
     ],
   },
