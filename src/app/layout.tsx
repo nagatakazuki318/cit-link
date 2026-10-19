@@ -3,7 +3,6 @@
 import { useEffect, useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
-import type { Metadata } from "next"; // ※Client Componentではmetadataは通常exportできないため下部で分離しますが、今回は動きをそのまま維持しています
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import Header from "@/components/header";
@@ -26,18 +25,20 @@ export default function RootLayout({
 }>) {
   const pathname = usePathname();
   const router = useRouter();
+  const [isMounted, setIsMounted] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
 
-  // 現在のページがログイン画面または新規登録画面かどうかを判定
   const isAuthPage = pathname === '/login' || pathname === '/signup';
 
+  // クライアントサイドでマウントされた後に認証チェックを行うことで、SSRの不一致（ハイドレーションエラー）を防ぐ
   useEffect(() => {
+    setIsMounted(true);
+
     async function checkUser() {
       const { data: { user } } = await supabase.auth.getUser();
 
       if (!user) {
         setIsAuthenticated(false);
-        // ログインしておらず、かつ認証ページ（login/signup）以外にいる場合はログイン画面へ飛ばす
         if (!isAuthPage) {
           router.push('/login');
         }
@@ -48,7 +49,6 @@ export default function RootLayout({
 
     checkUser();
 
-    // 認証状態の変化（ログイン・ログアウト）をリアルタイムで監視
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (!session && !isAuthPage) {
         setIsAuthenticated(false);
@@ -63,12 +63,14 @@ export default function RootLayout({
     };
   }, [pathname, isAuthPage, router]);
 
-  // 認証状態の判定中（画面のチラつき防止）
-  if (isAuthenticated === null && !isAuthPage) {
+  // サーバーサイドレンダリング時（またはマウント前）は、ハイドレーションのズレを防ぐために最低限のHTMLを返す
+  if (!isMounted) {
     return (
       <html lang="ja">
-        <body className="min-h-screen flex items-center justify-center bg-white text-zinc-500 text-sm">
-          読み込み中...
+        <body className={`${geistSans.variable} ${geistMono.variable} antialiased bg-white text-zinc-900 flex flex-col min-h-screen`}>
+          <div className="flex-grow flex items-center justify-center text-sm text-zinc-400">
+            読み込み中...
+          </div>
         </body>
       </html>
     );
@@ -77,15 +79,12 @@ export default function RootLayout({
   return (
     <html lang="ja">
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased bg-white text-zinc-900 flex flex-col min-h-screen`}>
-        {/* ログイン・新規登録ページ以外の場合のみヘッダーを表示 */}
         {!isAuthPage && <Header />}
 
-        {/* 各ページの中身がここに表示される */}
         <div className="flex-grow">
           {children}
         </div>
 
-        {/* ログイン・新規登録ページ以外の場合のみフッターを表示 */}
         {!isAuthPage && <Footer />}
       </body>
     </html>
