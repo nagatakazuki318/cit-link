@@ -28,7 +28,6 @@ export default function Header() {
             リンク
           </Link>
         </nav>
-        
       </div>
     </header>
   );
