@@ -27,6 +27,9 @@ export default function Header() {
           <Link href="/links" className="hover:text-red-100 transition-colors">
             リンク
           </Link>
+          <Link href="/settings" className="transition hover:text-red-100">
+            設定
+          </Link>
         </nav>
       </div>
     </header>
