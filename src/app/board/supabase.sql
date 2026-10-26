@@ -1,0 +1,5 @@
+-- 現在は友人が作成した public.threads / public.posts を使用します。
+-- テーブルの新規作成・変更は不要です。このファイルには実行するSQLはありません。
+-- 以前の board_threads / board_replies 用SQLは現在のコードでは使用しないでください。
+-- threads.id の主キー、posts.thread_id の外部キー、RLSはDB担当者に確認してください。
+-- コードはuser_idにログイン中のユーザーID、thread_idに実在するスレッドIDを指定します。

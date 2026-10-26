@@ -1,23 +1,69 @@
-import { mkdir, readFile, rename, writeFile } from "node:fs/promises";
-import path from "node:path";
-import { randomUUID } from "node:crypto";
-import { categories, grades, type Thread } from "../types";
+import { createClient } from "@supabase/supabase-js";
+import { categories } from "../types";
+import { createBoardStore, ThreadCreatedError } from "./storage";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
-const directory = process.env.BOARD_DATA_DIR || path.join(process.cwd(), "src", "app", "board", ".data");
-const file = path.join(directory, "threads.json");
-const state = globalThis as typeof globalThis & { boardQueue?: Promise<unknown> };
-async function read(): Promise<Thread[]> {
-  try { return JSON.parse(await readFile(file, "utf8")); }
-  catch (error) { if ((error as NodeJS.ErrnoException).code === "ENOENT") return []; throw error; }
+
+class ConfigurationError extends Error {}
+class AccessError extends Error {
+  constructor(message: string, readonly status: number) { super(message); }
 }
-export async function GET() {
-  try { return Response.json(await read(), { headers: { "Cache-Control": "no-store" } }); }
-  catch { return Response.json({ error: "掲示板を読み込めませんでした。" }, { status: 500 }); }
+
+async function store(request: Request) {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  if (!url || !key) throw new ConfigurationError();
+  const token = request.headers.get("authorization")?.match(/^Bearer\s+(\S+)$/i)?.[1];
+  if (!token) throw new AccessError("ログインしてから掲示板を利用してください。", 401);
+  let client;
+  try {
+    client = createClient(url, key, {
+      auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
+      global: {
+        headers: { Authorization: `Bearer ${token}` },
+        fetch: (input, init) => fetch(input, { ...init, signal: init?.signal || AbortSignal.timeout(12000) }),
+      },
+    });
+  } catch { throw new ConfigurationError(); }
+  // Validate the signed token on the server; never trust a user_id sent by the browser.
+  const { data, error } = await client.auth.getUser(token);
+  if (error) {
+    if (error.status === 401 || error.status === 403) throw new AccessError("ログインの有効期限が切れています。再度ログインしてください。", 401);
+    throw error;
+  }
+  if (!data.user) throw new AccessError("ログインしてから掲示板を利用してください。", 401);
+  if (data.user.email?.toLowerCase().split("@")[1] !== "chibatech.ac.jp") throw new AccessError("大学のアカウントでログインしてください。", 403);
+  return createBoardStore(client, data.user.id);
 }
+
+function failure(error: unknown) {
+  if (error instanceof AccessError) return Response.json({ error: error.message }, { status: error.status });
+  if (error instanceof ThreadCreatedError) {
+    return Response.json({
+      error: "スレッドは作成されましたが、本文の保存結果を確認できませんでした。本文を下書きに残しました。会話を確認し、未投稿の場合だけ返信として送信してください。",
+      thread: error.thread,
+    }, { status: 503 });
+  }
+  const value = error as { code?: string; message?: string; status?: number };
+  let message = "Supabaseに接続できませんでした。時間をおいて再度お試しください。";
+  if (error instanceof ConfigurationError) message = "Supabaseの接続URLと公開キーが未設定です。接続設定の担当者に確認してください。";
+  else if (/timeout|timed out|abort/i.test(value.message || "")) message = "通信がタイムアウトし、送信結果を確認できませんでした。一覧を確認してから再度お試しください。";
+  else if (["PGRST205", "42P01", "42703", "PGRST204"].includes(value.code || "")) message = "Supabaseのthreads/postsの列構成（posts.nicknameを含む）を確認してください。";
+  else if (value.status === 401 || /invalid.*(key|jwt)|api key|jwt expired/i.test(value.message || "")) message = "Supabaseの接続キーが無効です。接続設定の担当者に確認してください。";
+  else if (value.code === "42501" || value.status === 403) message = "掲示板へのアクセスが許可されていません。データベース担当者にthreads/postsの権限とRLS設定を確認してください。";
+  else if (value.code === "23503") return Response.json({ error: "スレッドまたは投稿者の情報が見つかりません。" }, { status: 409 });
+  return Response.json({ error: message }, { status: 503, headers: { "Cache-Control": "no-store" } });
+}
+
+export async function GET(request: Request) {
+  try { return Response.json(await (await store(request)).list(), { headers: { "Cache-Control": "no-store" } }); }
+  catch (error) { return failure(error); }
+}
+
 export async function POST(request: Request) {
-  if (request.headers.get("origin") && request.headers.get("origin") !== new URL(request.url).origin) return Response.json({ error: "送信元が無効です。" }, { status: 403 });
+  const origin = request.headers.get("origin");
+  if (origin && origin !== new URL(request.url).origin) return Response.json({ error: "送信元が無効です。" }, { status: 403 });
   let input: Record<string, unknown>;
   try {
     const raw = await request.text();
@@ -26,30 +72,15 @@ export async function POST(request: Request) {
     if (!input || typeof input !== "object" || Array.isArray(input)) throw new Error();
   } catch { return Response.json({ error: "投稿データが無効です。" }, { status: 400 }); }
   const string = (key: string) => typeof input[key] === "string" ? (input[key] as string).trim() : "";
-  const name = string("name"), grade = string("grade"), body = string("body"), title = string("title"), category = string("category"), threadId = string("threadId");
-  if (!name || name.length > 30 || !grades.some(g => g === grade) || !body || body.length > 2000 || (!threadId && (!title || title.length > 100 || !categories.some(c => c === category)))) return Response.json({ error: "名前・学年・本文（新規作成時はタイトルとカテゴリも）を確認してください。" }, { status: 400 });
-  const operation = (state.boardQueue || Promise.resolve()).then(async () => {
-    const threads = await read();
-    const now = new Date().toISOString();
-    const post = { id: randomUUID(), name, grade, body, createdAt: now };
-    let thread: Thread;
-    if (threadId) {
-      const found = threads.find(t => t.id === threadId);
-      if (!found) return Response.json({ error: "スレッドが見つかりません。" }, { status: 404 });
-      thread = found;
-      thread.posts.push(post);
-      thread.updatedAt = now;
-    } else {
-      thread = { id: randomUUID(), title, category, posts: [post], updatedAt: now };
-      threads.push(thread);
-    }
-    await mkdir(directory, { recursive: true });
-    const temporary = path.join(directory, `${randomUUID()}.tmp`);
-    await writeFile(temporary, JSON.stringify(threads), "utf8");
-    await rename(temporary, file);
-    return Response.json(thread, { status: 201 });
-  });
-  state.boardQueue = operation.catch(() => undefined);
-  try { return await operation; }
-  catch { return Response.json({ error: "保存できませんでした。時間をおいて再度お試しください。" }, { status: 500 }); }
+  const nickname = string("nickname"), body = string("body"), title = string("title"), category = string("category"), threadId = string("threadId");
+  if ((input.threadId != null && (typeof input.threadId !== "string" || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(threadId))) ||
+      !nickname || nickname.length > 30 || !body || body.length > 2000 || (!threadId && (!title || title.length > 100 || !categories.some(c => c === category)))) {
+    return Response.json({ error: "ニックネーム（1〜30文字）・本文（新規作成時はタイトルとカテゴリも）を確認してください。" }, { status: 400 });
+  }
+  try {
+    const database = await store(request);
+    const result = threadId ? await database.reply(threadId, { nickname, body }) : await database.create({ title, category, nickname, body });
+    if (!result) return Response.json({ error: "スレッドが見つかりません。" }, { status: 404 });
+    return Response.json(result, { status: 201 });
+  } catch (error) { return failure(error); }
 }
