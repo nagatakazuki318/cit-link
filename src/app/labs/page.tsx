@@ -28,7 +28,6 @@ const MOCK_LABS: Laboratory[] = [
     description: '画像や感性情報処理を中心に、暮らしを豊かにする「気の利いた」知能システムや、人間の視野を可視化する技術を研究しています。',
     capacity: 10,
     detailUrl: 'https://www.cis-cit.net/教員紹介/今井-順一',
-    labUrl: 'http://www.imai.cs.it-chiba.ac.jp/',
     researchUrl: 'https://researchmap.jp/imai/',
     researchUrlLabel: 'researchmap',
   },
@@ -42,8 +41,6 @@ const MOCK_LABS: Laboratory[] = [
     capacity: 10,
     detailUrl: 'https://www.cis-cit.net/教員紹介/小笠原-秀人',
     labUrl: 'https://sel.jpn.org/',
-    researchUrl: 'https://www.lib.it-chiba.ac.jp/cithp/KgApp?resId=S000447',
-    researchUrlLabel: '大学研究者情報',
   },
   {
     id: '3',
@@ -54,7 +51,6 @@ const MOCK_LABS: Laboratory[] = [
     description: 'ICTを活用し、教えや学びの中にある困難を軽減する研究を実施。本質的な学習をスムーズに進めるための支援システムを開発します。',
     capacity: 10,
     detailUrl: 'https://www.cis-cit.net/教員紹介/國宗-永佳',
-    labUrl: 'https://elt.net.it-chiba.ac.jp/',
     researchUrl: 'https://researchmap.jp/read0142436',
     researchUrlLabel: 'researchmap',
   },
@@ -587,4 +583,4 @@ export default function LabsPage() {
       )}
     </main>
   );
-}
+}
