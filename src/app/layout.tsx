@@ -28,7 +28,7 @@ export default function RootLayout({
   const [isMounted, setIsMounted] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
 
-  const isAuthPage = pathname === '/login' || pathname === '/signup';
+  const isAuthPage = pathname === '/login' || pathname === '/login/callback';
 
   // クライアントサイドでマウントされた後に認証チェックを行うことで、SSRの不一致（ハイドレーションエラー）を防ぐ
   useEffect(() => {
