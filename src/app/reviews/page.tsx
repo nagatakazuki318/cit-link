@@ -6,6 +6,7 @@ import { supabase } from '@/lib/supabase';
 interface ReviewItem {
   id: string;
   course_name: string;
+  grade: string | null;
   professor: string;
   difficulty: string;
   workload: string;
@@ -16,6 +17,7 @@ interface ReviewItem {
 
 const reviewFields = [
   { name: 'course_name', label: '授業名', required: true },
+  { name: 'grade', label: '対象学年', required: true },
   { name: 'professor', label: '担当教員', required: true },
   { name: 'difficulty', label: '難易度', required: true },
   { name: 'workload', label: '負担', required: true },
@@ -25,7 +27,7 @@ const reviewFields = [
 ] as const;
 
 const reviewColumns =
-  'id, course_name, professor, difficulty, workload, exam_type, comment, tag';
+  'id, course_name, grade, professor, difficulty, workload, exam_type, comment, tag';
 
 const inputClass =
   'mt-1 w-full rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm font-normal';
@@ -166,6 +168,19 @@ export default function ReviewsPage() {
                       required={required}
                       className={inputClass}
                     />
+                  ) : name === 'grade' ? (
+                    <select
+                      name={name}
+                      required={required}
+                      defaultValue=""
+                      className={inputClass}
+                    >
+                      <option value="" disabled>学年を選択してください</option>
+                      <option value="1年生">1年生</option>
+                      <option value="2年生">2年生</option>
+                      <option value="3年生">3年生</option>
+                      <option value="4年生">4年生</option>
+                    </select>
                   ) : name === 'difficulty' ? (
                     <select
                       name={name}
@@ -173,12 +188,24 @@ export default function ReviewsPage() {
                       defaultValue=""
                       className={inputClass}
                     >
-                      <option value="" disabled>
-                        選択してください
-                      </option>
+                      <option value="" disabled>選択してください</option>
                       <option value="易しい">易しい</option>
                       <option value="普通">普通</option>
-                      <option value="鬼">鬼</option>
+                      <option value="難しい">難しい</option>
+                    </select>
+                  ) : name === 'workload' ? (
+                    <select
+                      name={name}
+                      required={required}
+                      defaultValue=""
+                      className={inputClass}
+                    >
+                      <option value="" disabled>負担を選択してください</option>
+                      <option value="非常に少ない">非常に少ない</option>
+                      <option value="少ない">少ない</option>
+                      <option value="普通">普通</option>
+                      <option value="多い">多い</option>
+                      <option value="非常に多い">非常に多い</option>
                     </select>
                   ) : (
                     <input
@@ -232,6 +259,12 @@ export default function ReviewsPage() {
                         <span className="text-base font-medium text-zinc-900 transition-colors group-hover:text-blue-600">
                           {review.course_name}
                         </span>
+
+                        {review.grade && (
+                          <span className="rounded-full bg-blue-100 px-2.5 py-0.5 text-[10px] font-medium text-blue-700">
+                            {review.grade}
+                          </span>
+                        )}
 
                         {review.tag && (
                           <span className="rounded-full bg-zinc-200/60 px-2.5 py-0.5 text-[10px] font-medium uppercase tracking-wider text-zinc-600">
