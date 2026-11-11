@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, type CSSProperties } from "react";
@@ -11,8 +10,73 @@ type Event = {
   description: string;
 };
 
-// 予定を追加するときは、この部分に書く
+type OfficeHour = {
+  teacher: string;
+  weekday?: number[];
+  dates?: string[];
+  time: string;
+  place: string;
+  description: string;
+};
+
+// 通常のイベント
 const events: Event[] = [];
+
+// オフィスアワー
+// 曜日：日曜=0、月曜=1、火曜=2、水曜=3、木曜=4、金曜=5、土曜=6
+const officeHours: OfficeHour[] = [
+  {
+    teacher: "今井 順一（イマイ ジュンイチ）",
+    weekday: [3],
+    time: "13:00〜14:00",
+    place: "津田沼キャンパス 7号館9階 認知情報科学科オフィス070915",
+    description: "",
+  },
+  {
+    teacher: "東本 崇仁（トウモト タカヒト）",
+    weekday: [3],
+    time: "13:00〜15:00",
+    place: "7号館6階 第1研究室",
+    description:
+      "いつでもご相談ください。基本オフィスアワーにはいますが、事前に連絡を頂けると安心かもしれません。",
+  },
+  {
+    teacher: "新井田 統（ニイダ スマル）",
+    dates: [
+      "2026-10-05",
+      "2026-10-19",
+      "2026-11-02",
+      "2026-11-16",
+      "2026-11-30",
+      "2026-12-14",
+      "2026-12-28",
+      "2027-01-11",
+      "2027-01-25",
+      "2027-02-08",
+      "2027-02-22",
+      "2027-03-08",
+      "2027-03-22",
+    ],
+    time: "11:00〜12:00",
+    place: "1号館11階 021103",
+    description:
+      "この時間はアポイントメントなしで訪問して貰って構いません。他の時間の場合は事前に連絡をしてください。",
+  },
+  {
+    teacher: "藤田 茂（フジタ シゲル）",
+    weekday: [1],
+    time: "15:00〜16:00",
+    place: "津田沼校舎7号館8階 認知情報科学科オフィス1",
+    description: "",
+  },
+  {
+    teacher: "山崎 治（ヤマザキ オサム）",
+    weekday: [1, 5],
+    time: "17:00〜18:00",
+    place: "津田沼キャンパス7号館6階 第2研究室",
+    description: "",
+  },
+];
 
 const weekdays = ["日", "月", "火", "水", "木", "金", "土"];
 
@@ -82,8 +146,21 @@ export default function CalendarPage() {
     },
   };
 
+  // 選択した日の通常イベント
   const selectedEvents = events.filter(
     (event) => event.date === selectedDate
+  );
+
+  // 選択した日の曜日
+  const selectedWeekday = selectedDate
+    ? new Date(`${selectedDate}T00:00:00`).getDay()
+    : -1;
+
+  // 選択した日のオフィスアワー
+  const selectedOfficeHours = officeHours.filter((office) =>
+    office.dates
+      ? office.dates.includes(selectedDate ?? "")
+      : office.weekday?.includes(selectedWeekday)
   );
 
   // 2026年10月から2027年3月までの6か月
@@ -162,6 +239,14 @@ export default function CalendarPage() {
                     (event) => event.date === date
                   );
 
+                  const weekday = new Date(year, month, day).getDay();
+
+                  const hasOfficeHour = officeHours.some((office) =>
+                    office.dates
+                      ? office.dates.includes(date)
+                      : office.weekday?.includes(weekday)
+                  );
+
                   const isSelected = selectedDate === date;
 
                   // 今日の日付かどうかを判定
@@ -172,18 +257,16 @@ export default function CalendarPage() {
                     today.getMonth() === month &&
                     today.getDate() === day;
 
-                  const weekday = new Date(year, month, day).getDay();
-
                   return (
                     <button
                       key={day}
                       type="button"
-                      aria-label={`${year}年${month + 1}月${day}日${hasEvent ? "、予定あり" : ""}${isToday ? "、今日" : ""}`}
+                      aria-label={`${year}年${month + 1}月${day}日${hasEvent ? "、イベントあり" : ""}${hasOfficeHour ? "、オフィスアワーあり" : ""}`}
                       onClick={() => setSelectedDate(date)}
                       style={{
                         ...styles.dayButton,
 
-                        // 今日または選択した日は赤系の色
+                        // 今日または選択した日は赤系
                         background:
                           isSelected || isToday
                             ? COLORS.accent
@@ -191,7 +274,7 @@ export default function CalendarPage() {
                               ? COLORS.event
                               : "transparent",
 
-                        // 赤系の背景では白文字
+                        // 文字色
                         color:
                           isSelected || isToday
                             ? "#ffffff"
@@ -201,20 +284,21 @@ export default function CalendarPage() {
                                 ? COLORS.saturday
                                 : COLORS.normal,
 
-                        // 今日または選択した日には赤系の枠
+                        // 今日または選択した日の枠
                         border:
                           isSelected || isToday
                             ? `1px solid ${COLORS.accent}`
                             : "1px solid transparent",
 
                         fontWeight:
-                          hasEvent || isSelected || isToday
+                          hasEvent || hasOfficeHour || isSelected || isToday
                             ? "bold"
                             : "normal",
                       }}
                     >
                       {day}
                       {hasEvent && !isSelected && !isToday ? " •" : ""}
+                      {hasOfficeHour && !isSelected && !isToday ? " ○" : ""}
                     </button>
                   );
                 })}
@@ -244,38 +328,116 @@ export default function CalendarPage() {
             </p>
           )}
 
-          {selectedDate && selectedEvents.length === 0 && (
-            <p style={{ color: COLORS.muted }}>
-              この日に予定はありません。
-            </p>
-          )}
-
-          {selectedEvents.map((event, index) => (
-            <div
-              key={`${event.date}-${event.title}-${index}`}
-              style={{
-                padding: "14px 0",
-                borderTop: `1px solid ${COLORS.border}`,
-              }}
-            >
+          {/* オフィスアワー */}
+          {selectedDate && selectedOfficeHours.length > 0 && (
+            <div style={{ marginBottom: "20px" }}>
               <h3
                 style={{
-                  margin: "0 0 12px",
-                  fontSize: "18px",
-                  color: COLORS.accent,
+                  fontSize: "17px",
+                  color: "#6d28d9",
+                  marginBottom: "12px",
                 }}
               >
-                {event.title}
+                オフィスアワー
               </h3>
 
-              <p>時間：{event.time}</p>
-              <p>場所：{event.place}</p>
-              <p style={{ lineHeight: 1.7 }}>{event.description}</p>
+              {selectedOfficeHours.map((office, index) => (
+                <div
+                  key={`${office.teacher}-${index}`}
+                  style={{
+                    padding: "14px",
+                    marginBottom: "10px",
+                    borderRadius: "8px",
+                    background: "#f5f3ff",
+                    border: "1px solid #ddd6fe",
+                  }}
+                >
+                  <h4
+                    style={{
+                      margin: "0 0 10px",
+                      fontSize: "16px",
+                      color: "#6d28d9",
+                    }}
+                  >
+                    {office.teacher}
+                  </h4>
+
+                  <p style={{ margin: "6px 0" }}>
+                    時間：{office.time}
+                  </p>
+
+                  <p style={{ margin: "6px 0" }}>
+                    場所：{office.place}
+                  </p>
+
+                  {office.description && (
+                    <p
+                      style={{
+                        margin: "10px 0 0",
+                        lineHeight: 1.7,
+                        fontSize: "14px",
+                      }}
+                    >
+                      備考：{office.description}
+                    </p>
+                  )}
+                </div>
+              ))}
             </div>
-          ))}
+          )}
+
+          {/* 通常イベント */}
+          {selectedEvents.length > 0 && (
+            <div>
+              <h3
+                style={{
+                  fontSize: "17px",
+                  color: COLORS.accent,
+                  marginBottom: "12px",
+                }}
+              >
+                イベント
+              </h3>
+
+              {selectedEvents.map((event, index) => (
+                <div
+                  key={`${event.date}-${event.title}-${index}`}
+                  style={{
+                    padding: "14px 0",
+                    borderTop: `1px solid ${COLORS.border}`,
+                  }}
+                >
+                  <h4
+                    style={{
+                      margin: "0 0 12px",
+                      fontSize: "18px",
+                      color: COLORS.accent,
+                    }}
+                  >
+                    {event.title}
+                  </h4>
+
+                  <p>時間：{event.time}</p>
+                  <p>場所：{event.place}</p>
+                  <p style={{ lineHeight: 1.7 }}>
+                    {event.description}
+                  </p>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* 予定がない場合 */}
+          {selectedDate &&
+            selectedEvents.length === 0 &&
+            selectedOfficeHours.length === 0 && (
+              <p style={{ color: COLORS.muted }}>
+                この日に予定はありません。
+              </p>
+            )}
         </section>
 
-        {/* ページ下部の色の説明 */}
+        {/* 色・マークの説明 */}
         <p
           style={{
             fontSize: "13px",
@@ -294,12 +456,11 @@ export default function CalendarPage() {
 
           <span>
             <span style={{ color: COLORS.event }}>■</span>
-            {" "}予定がある日
+            {" "}イベントがある日
           </span>
 
           <span>
-            <span style={{ color: "#94a3b8" }}>□</span>
-            {" "}通常の日
+            ○ オフィスアワーがある日
           </span>
         </p>
       </div>
