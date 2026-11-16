@@ -3,11 +3,19 @@
 import React, { useState, useMemo } from 'react';
 
 // --- 型定義 ---
+interface OfficeHour {
+  schedule: string;       // 曜日・時間
+  location: string;       // 場所
+  email: string;          // メール
+  note: string;           // 備考
+}
+
 interface Laboratory {
   id: string;
   labName: string;
   professor: string;
-  role: '教授' | '准教授';
+  professorKana?: string; // 教員名フリガナ
+  role: '教授' | '准教授' | '助教';
   fields: string[];
   description: string;
   capacity: number;
@@ -15,6 +23,7 @@ interface Laboratory {
   labUrl?: string;        // 個別の研究室Webサイト
   researchUrl?: string;   // researchmap または 大学研究者情報
   researchUrlLabel?: string;
+  officeHour?: OfficeHour; // オフィスアワー・連絡先情報
 }
 
 // --- 千葉工業大学 情報変革科学部 認知情報科学科 のデータ ---
@@ -23,6 +32,7 @@ const MOCK_LABS: Laboratory[] = [
     id: '1',
     labName: '今井研究室',
     professor: '今井 順一',
+    professorKana: 'イマイ ジュンイチ',
     role: '教授',
     fields: ['画像処理', '感性情報処理', '知能システム'],
     description: '画像や感性情報処理を中心に、暮らしを豊かにする「気の利いた」知能システムや、人間の視野を可視化する技術を研究しています。',
@@ -30,6 +40,12 @@ const MOCK_LABS: Laboratory[] = [
     detailUrl: 'https://www.cis-cit.net/教員紹介/今井-順一',
     researchUrl: 'https://researchmap.jp/imai/',
     researchUrlLabel: 'researchmap',
+    officeHour: {
+      schedule: '水曜 13:00〜14:00',
+      location: '津田沼キャンパス 7号館9階 認知情報科学科オフィス070915',
+      email: 'jun-ichi.imai@chibatech.ac.jp',
+      note: 'なし',
+    },
   },
   {
     id: '2',
@@ -70,6 +86,7 @@ const MOCK_LABS: Laboratory[] = [
     id: '5',
     labName: '東本研究室',
     professor: '東本 崇仁',
+    professorKana: 'トウモト タカヒト',
     role: '教授',
     fields: ['認知心理学', '人工知能', '知的学習支援'],
     description: '認知心理学とAI技術を用い、個々に適した学習を実現するシステムを開発。人の心理を理解し問題解決できるコンピュータを目指します。',
@@ -78,11 +95,18 @@ const MOCK_LABS: Laboratory[] = [
     labUrl: 'https://www.takahito.com/tomoto/',
     researchUrl: 'https://researchmap.jp/read0141235',
     researchUrlLabel: 'researchmap',
+    officeHour: {
+      schedule: '水曜 13:00〜15:00',
+      location: '7号館6階第1研究室',
+      email: 'tomoto.takahito@chibatech.ac.jp',
+      note: 'いつでもご相談ください。基本オフィスアワーにはいますが、事前に連絡を頂けると安心かもしれません。',
+    },
   },
   {
     id: '6',
     labName: '新井田研究室',
     professor: '新井田 統',
+    professorKana: 'ニイダ スマル',
     role: '教授',
     fields: ['サービスデザイン', 'プロトタイピング', '参加型デザイン'],
     description: '人の認知特性を理解し、魅力的なサービスをデザインします。アイデア創出からプロトタイプ検証までのプロセスをICTで高度化します。',
@@ -90,11 +114,18 @@ const MOCK_LABS: Laboratory[] = [
     detailUrl: 'https://www.cis-cit.net/教員紹介/新井田-統',
     researchUrl: 'https://researchmap.jp/Niida',
     researchUrlLabel: 'researchmap',
+    officeHour: {
+      schedule: '月曜 11:00〜12:00',
+      location: '1号館11階 021103',
+      email: 'niida.sumaru@chibatech.ac.jp',
+      note: 'この時間はアポイントメントなしで訪問して貰って構いません。他の時間の場合は事前に連絡をしてください。',
+    },
   },
   {
     id: '7',
     labName: '藤田研究室',
     professor: '藤田 茂',
+    professorKana: 'フジタ シゲル',
     role: '教授',
     fields: ['知能情報学', 'マルチエージェント', 'セキュリティ'],
     description: 'IoTの情報を守る秘密分散・秘密計算技術や、マルチエージェントAIなど、暮らしを便利で安全にする情報技術を開発しています。',
@@ -102,6 +133,12 @@ const MOCK_LABS: Laboratory[] = [
     detailUrl: 'https://www.cis-cit.net/教員紹介/藤田-茂',
     researchUrl: 'https://researchmap.jp/shigeru_fujita',
     researchUrlLabel: 'researchmap',
+    officeHour: {
+      schedule: '月曜 15:00〜16:00',
+      location: '津田沼校舎7号館8階認知情報科学科オフィス1',
+      email: 'shigeru.fujita@chibatech.ac.jp',
+      note: 'なし',
+    },
   },
   {
     id: '8',
@@ -143,6 +180,7 @@ const MOCK_LABS: Laboratory[] = [
     id: '11',
     labName: '山崎研究室',
     professor: '山崎 治',
+    professorKana: 'ヤマザキ オサム',
     role: '准教授',
     fields: ['認知科学', '認知心理学', '知的活動支援'],
     description: '人間の活動を「心の中の情報処理」と捉え、学習や創造性といった知的活動の支援に向けた心理実験やシステム開発を行っています。',
@@ -151,10 +189,29 @@ const MOCK_LABS: Laboratory[] = [
     labUrl: 'https://www.cog.chibatech.ac.jp/',
     researchUrl: 'https://researchmap.jp/7000003167',
     researchUrlLabel: 'researchmap',
+    officeHour: {
+      schedule: '月曜・金曜 17:00〜18:00',
+      location: '津田沼キャンパス7号館6階第2研究室',
+      email: 'yamazaki.osamu@chibatech.ac.jp',
+      note: 'なし',
+    },
+  },
+  {
+    id: '12',
+    labName: '樋口研究室',
+    professor: '樋口 洋子',
+    professorKana: 'ヒグチ ヨウコ',
+    role: '助教',
+    fields: ['認知心理学', '神経科学', '学習・記憶'],
+    description: '学習・記憶・注意に焦点を当て、人間が世界を認識する仕組みや、無意識のうちに規則性を学ぶ統計学習の脳内メカニズムを実験心理学・神経科学の手法で解明しています。',
+    capacity: 10,
+    detailUrl: 'https://www.cis-cit.net/教員紹介/樋口-洋子',
+    researchUrl: 'https://nrid.nii.ac.jp/ja/nrid/1000040793310/',
+    researchUrlLabel: 'KAKEN',
   }
 ];
 
-type RoleFilter = 'すべて' | '教授' | '准教授';
+type RoleFilter = 'すべて' | '教授' | '准教授' | '助教';
 
 export default function LabsPage() {
   const [searchQuery, setSearchQuery] = useState('');
@@ -184,8 +241,15 @@ export default function LabsPage() {
       return (
         lab.labName.toLowerCase().includes(query) ||
         lab.professor.toLowerCase().includes(query) ||
+        (lab.professorKana && lab.professorKana.toLowerCase().includes(query)) ||
         lab.description.toLowerCase().includes(query) ||
-        lab.fields.some(field => field.toLowerCase().includes(query))
+        lab.fields.some(field => field.toLowerCase().includes(query)) ||
+        (lab.officeHour && (
+          lab.officeHour.schedule.toLowerCase().includes(query) ||
+          lab.officeHour.location.toLowerCase().includes(query) ||
+          lab.officeHour.email.toLowerCase().includes(query) ||
+          lab.officeHour.note.toLowerCase().includes(query)
+        ))
       );
     });
   }, [searchQuery, selectedRole, selectedField]);
@@ -251,7 +315,7 @@ export default function LabsPage() {
             {/* 役職フィルタ */}
             <div className="flex flex-wrap items-center gap-2">
               <span className="text-xs font-bold text-slate-500 mr-1">職位：</span>
-              {(['すべて', '教授', '准教授'] as RoleFilter[]).map(role => {
+              {(['すべて', '教授', '准教授', '助教'] as RoleFilter[]).map(role => {
                 const isActive = selectedRole === role;
                 const count = role === 'すべて'
                   ? MOCK_LABS.length
@@ -346,13 +410,18 @@ export default function LabsPage() {
                   </div>
 
                   <div className="flex items-center justify-between text-slate-700 font-semibold text-sm bg-slate-50 px-3 py-2 rounded-xl border border-slate-100">
-                    <div className="flex items-center">
-                      <svg className="w-4 h-4 mr-2 text-[#a94448] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <div className="flex items-center flex-wrap gap-x-1.5">
+                      <svg className="w-4 h-4 mr-0.5 text-[#a94448] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                       </svg>
                       <span>{lab.professor}</span>
+                      {lab.professorKana && (
+                        <span className="text-xs text-slate-400 font-normal">
+                          （{lab.professorKana}）
+                        </span>
+                      )}
                     </div>
-                    <span className="text-xs text-slate-500 font-medium">
+                    <span className="text-xs text-slate-500 font-medium shrink-0">
                       定員 {lab.capacity}名
                     </span>
                   </div>
@@ -381,9 +450,46 @@ export default function LabsPage() {
                 </div>
 
                 {/* 説明文（全文を読みやすく表示） */}
-                <p className="text-slate-600 text-sm leading-7 mb-6 flex-grow">
+                <p className="text-slate-600 text-sm leading-7 mb-4 flex-grow">
                   {lab.description}
                 </p>
+
+                {/* オフィスアワー・連絡先情報（データがある場合） */}
+                {lab.officeHour && (
+                  <div className="mb-5 p-3.5 rounded-xl bg-slate-50 border border-slate-200/80 text-xs space-y-2">
+                    <div className="font-bold text-[#a94448] flex items-center gap-1.5 pb-1 border-b border-slate-200/70">
+                      <svg className="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                      <span>オフィスアワー・連絡先</span>
+                    </div>
+                    <dl className="space-y-1.5 text-slate-600">
+                      <div className="flex items-start gap-2">
+                        <dt className="font-bold text-slate-500 shrink-0 w-16">曜日・時間</dt>
+                        <dd className="font-semibold text-slate-800">{lab.officeHour.schedule}</dd>
+                      </div>
+                      <div className="flex items-start gap-2">
+                        <dt className="font-bold text-slate-500 shrink-0 w-16">場所</dt>
+                        <dd className="text-slate-700">{lab.officeHour.location}</dd>
+                      </div>
+                      <div className="flex items-start gap-2">
+                        <dt className="font-bold text-slate-500 shrink-0 w-16">メール</dt>
+                        <dd className="break-all">
+                          <a
+                            href={`mailto:${lab.officeHour.email}`}
+                            className="text-[#a94448] hover:underline font-medium"
+                          >
+                            {lab.officeHour.email}
+                          </a>
+                        </dd>
+                      </div>
+                      <div className="flex items-start gap-2">
+                        <dt className="font-bold text-slate-500 shrink-0 w-16">備考</dt>
+                        <dd className="text-slate-600 leading-relaxed">{lab.officeHour.note}</dd>
+                      </div>
+                    </dl>
+                  </div>
+                )}
 
                 {/* カード下部：各種サイトへのアクセスボタン */}
                 <div className="pt-4 border-t border-slate-100 mt-auto flex flex-col gap-2">
@@ -474,7 +580,7 @@ export default function LabsPage() {
           onClick={() => setSelectedLab(null)}
         >
           <div
-            className="bg-white rounded-2xl max-w-lg w-full overflow-hidden shadow-2xl border border-slate-200 animate-in fade-in zoom-in-95 duration-150"
+            className="bg-white rounded-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto shadow-2xl border border-slate-200 animate-in fade-in zoom-in-95 duration-150"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="h-2 w-full bg-gradient-to-r from-[#a94448] to-[#cf6569]" />
@@ -488,7 +594,13 @@ export default function LabsPage() {
                     {selectedLab.labName}
                   </h2>
                   <p className="text-slate-600 font-semibold mt-1">
-                    担当：{selectedLab.professor}（{selectedLab.role}） / 定員 {selectedLab.capacity}名
+                    担当：{selectedLab.professor}
+                    {selectedLab.professorKana && (
+                      <span className="text-xs text-slate-500 font-normal ml-1">
+                        （{selectedLab.professorKana}）
+                      </span>
+                    )}
+                    <span className="ml-1">（{selectedLab.role}） / 定員 {selectedLab.capacity}名</span>
                   </p>
                 </div>
                 <button
@@ -516,12 +628,49 @@ export default function LabsPage() {
               </div>
 
               {/* 研究内容 */}
-              <div className="bg-slate-50 rounded-xl p-4 border border-slate-100 mb-6">
+              <div className="bg-slate-50 rounded-xl p-4 border border-slate-100 mb-4">
                 <h3 className="text-xs font-bold text-slate-500 mb-1.5">研究概要</h3>
                 <p className="text-slate-700 text-sm leading-7">
                   {selectedLab.description}
                 </p>
               </div>
+
+              {/* オフィスアワー・連絡先情報 */}
+              {selectedLab.officeHour && (
+                <div className="bg-slate-50 rounded-xl p-4 border border-slate-100 mb-6">
+                  <h3 className="text-xs font-bold text-[#a94448] mb-2.5 flex items-center gap-1.5">
+                    <svg className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <span>オフィスアワー・連絡先</span>
+                  </h3>
+                  <dl className="space-y-2 text-sm text-slate-700">
+                    <div className="flex flex-col sm:flex-row sm:items-start gap-1 sm:gap-3">
+                      <dt className="text-xs font-bold text-slate-500 sm:w-20 shrink-0 pt-0.5">曜日・時間</dt>
+                      <dd className="font-semibold text-slate-800">{selectedLab.officeHour.schedule}</dd>
+                    </div>
+                    <div className="flex flex-col sm:flex-row sm:items-start gap-1 sm:gap-3">
+                      <dt className="text-xs font-bold text-slate-500 sm:w-20 shrink-0 pt-0.5">場所</dt>
+                      <dd>{selectedLab.officeHour.location}</dd>
+                    </div>
+                    <div className="flex flex-col sm:flex-row sm:items-start gap-1 sm:gap-3">
+                      <dt className="text-xs font-bold text-slate-500 sm:w-20 shrink-0 pt-0.5">メール</dt>
+                      <dd className="break-all">
+                        <a
+                          href={`mailto:${selectedLab.officeHour.email}`}
+                          className="text-[#a94448] hover:underline font-medium"
+                        >
+                          {selectedLab.officeHour.email}
+                        </a>
+                      </dd>
+                    </div>
+                    <div className="flex flex-col sm:flex-row sm:items-start gap-1 sm:gap-3">
+                      <dt className="text-xs font-bold text-slate-500 sm:w-20 shrink-0 pt-0.5">備考</dt>
+                      <dd className="text-slate-600 leading-relaxed">{selectedLab.officeHour.note}</dd>
+                    </div>
+                  </dl>
+                </div>
+              )}
 
               {/* 外部サイトへのリンク一覧 */}
               <div className="space-y-2.5">
