@@ -42,6 +42,95 @@ export default function ReviewsPage() {
   const [showForm, setShowForm] = useState(false);
   const [posting, setPosting] = useState(false);
   const [postError, setPostError] = useState('');
+  const [userId, setUserId] = useState<string | null>(null);
+  const [helpfulCounts, setHelpfulCounts] = useState<Record<string, number>>({});
+  const [myHelpfuls, setMyHelpfuls] = useState<Set<string>>(new Set());
+  const [helpfulPending, setHelpfulPending] = useState<Set<string>>(new Set());
+  const [helpfulError, setHelpfulError] = useState('');
+
+  useEffect(() => {
+    async function fetchHelpfuls() {
+      try {
+        const [{ data: userData }, { data, error }] = await Promise.all([
+          supabase.auth.getUser(),
+          supabase.from('review_helpfuls').select('review_id, user_id'),
+        ]);
+
+        const currentUserId = userData.user?.id ?? null;
+        setUserId(currentUserId);
+
+        if (error) {
+          console.error('「参考になった」の取得に失敗しました', error);
+          return;
+        }
+
+        const counts: Record<string, number> = {};
+        const mine = new Set<string>();
+        for (const row of data ?? []) {
+          const reviewId = String(row.review_id);
+          counts[reviewId] = (counts[reviewId] ?? 0) + 1;
+          if (row.user_id === currentUserId) mine.add(reviewId);
+        }
+        setHelpfulCounts(counts);
+        setMyHelpfuls(mine);
+      } catch (error) {
+        console.error('「参考になった」の取得に失敗しました', error);
+      }
+    }
+
+    void fetchHelpfuls();
+  }, []);
+
+  async function toggleHelpful(reviewId: string) {
+    if (!userId || helpfulPending.has(reviewId)) return;
+
+    const wasHelpful = myHelpfuls.has(reviewId);
+    const applyLocal = (helpful: boolean) => {
+      setMyHelpfuls((current) => {
+        const next = new Set(current);
+        if (helpful) next.add(reviewId);
+        else next.delete(reviewId);
+        return next;
+      });
+      setHelpfulCounts((current) => ({
+        ...current,
+        [reviewId]: Math.max(0, (current[reviewId] ?? 0) + (helpful ? 1 : -1)),
+      }));
+    };
+
+    setHelpfulError('');
+    setHelpfulPending((current) => new Set(current).add(reviewId));
+    applyLocal(!wasHelpful);
+
+    try {
+      const { error } = wasHelpful
+        ? await supabase
+            .from('review_helpfuls')
+            .delete()
+            .eq('review_id', reviewId)
+            .eq('user_id', userId)
+        : await supabase
+            .from('review_helpfuls')
+            .insert({ review_id: reviewId, user_id: userId });
+
+      // 23505: すでに押されていた（別タブなど）→ 押された状態のままでよい
+      if (error && error.code !== '23505') {
+        console.error('「参考になった」の更新に失敗しました', error);
+        applyLocal(wasHelpful);
+        setHelpfulError('「参考になった」を更新できませんでした。');
+      }
+    } catch (error) {
+      console.error('「参考になった」の更新に失敗しました', error);
+      applyLocal(wasHelpful);
+      setHelpfulError('通信エラーのため「参考になった」を更新できませんでした。');
+    } finally {
+      setHelpfulPending((current) => {
+        const next = new Set(current);
+        next.delete(reviewId);
+        return next;
+      });
+    }
+  }
 
   useEffect(() => {
     async function fetchReviews() {
@@ -242,6 +331,12 @@ export default function ReviewsPage() {
             </p>
           )}
 
+          {helpfulError && (
+            <p role="alert" className="mb-4 text-sm text-red-600">
+              {helpfulError}
+            </p>
+          )}
+
           {loading ? (
             <p className="py-10 text-center text-sm text-zinc-400">
               読み込み中...
@@ -308,7 +403,26 @@ export default function ReviewsPage() {
                         {review.exam_type}
                       </strong>
                     </span>
-                    <span>参考になった (0)</span>
+                    {(() => {
+                      const reviewId = String(review.id);
+                      const helpful = myHelpfuls.has(reviewId);
+                      return (
+                        <button
+                          type="button"
+                          aria-pressed={helpful}
+                          disabled={!userId || !review.id || helpfulPending.has(reviewId)}
+                          onClick={() => void toggleHelpful(reviewId)}
+                          className={`inline-flex shrink-0 items-center gap-1 rounded-full border px-3 py-1.5 font-medium transition-colors disabled:opacity-50 ${
+                            helpful
+                              ? 'border-[#a94448] bg-[#a94448] text-white'
+                              : 'border-zinc-300 bg-white text-zinc-600 hover:border-[#a94448] hover:text-[#a94448]'
+                          }`}
+                        >
+                          <span aria-hidden="true">👍</span>
+                          参考になった ({helpfulCounts[reviewId] ?? 0})
+                        </button>
+                      );
+                    })()}
                   </div>
                 </div>
               ))}
