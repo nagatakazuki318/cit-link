@@ -1,5 +1,6 @@
 import Link from "next/link";
 import RecentPosts from "../components/RecentPosts";
+import RecentReviews from "../components/RecentReviews";
 
 export default function Home() {
   return (
@@ -333,6 +334,39 @@ export default function Home() {
          <RecentPosts />
 
           </div>
+      </section>
+
+
+      {/* 授業評価 */}
+      <section className="border-t bg-gray-50">
+
+        <div className="mx-auto max-w-6xl px-6 py-16">
+
+          <div className="mb-8 flex items-center justify-between gap-4">
+
+            <div>
+              <h2 className="text-2xl font-bold">
+                授業評価
+              </h2>
+
+              <p className="mt-2 text-gray-600">
+                先輩たちが残した授業の難易度や負担をチェックできます。
+              </p>
+            </div>
+
+            <Link
+              href="/reviews"
+              className="shrink-0 text-sm font-medium text-[#a94448] hover:underline"
+            >
+              すべて見る →
+            </Link>
+
+          </div>
+
+
+          <RecentReviews />
+
+        </div>
       </section>
     </main>
   );
