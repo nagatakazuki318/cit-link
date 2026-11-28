@@ -24,6 +24,9 @@ export default function Header() {
           <Link href="/labs" className="hover:text-red-100 transition-colors">
             研究室・教授
           </Link>
+          <Link href="/duel" className="hover:text-red-100 transition-colors">
+            デュエマ
+          </Link>
           <Link href="/links" className="hover:text-red-100 transition-colors">
             リンク
           </Link>
